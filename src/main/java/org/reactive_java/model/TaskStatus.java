@@ -1,4 +1,4 @@
-package domain;
+package org.reactive_java.model;
 
 import lombok.Builder;
 
