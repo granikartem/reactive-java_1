@@ -9,11 +9,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
-import static org.reactive_java.generator.GeneratorConstants.*;
+import static org.reactive_java.util.Constants.*;
 
 public class UserGenerator {
     public static List<User> generateUsers() {
-        List<User> users = new ArrayList<User>(USER_AMOUNT);
+        List<User> users = new ArrayList<>(USER_AMOUNT);
 
         for (int i = 0; i < USER_AMOUNT; i++) {
             users.add(new User(RandomStringUtils.randomAlphanumeric(10), getRandomGroups()));

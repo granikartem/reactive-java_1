@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
-import static org.reactive_java.generator.GeneratorConstants.*;
+import static org.reactive_java.util.Constants.*;
 
 public class TaskGenerator {
 

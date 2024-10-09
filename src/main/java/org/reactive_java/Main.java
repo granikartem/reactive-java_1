@@ -2,23 +2,19 @@ package org.reactive_java;
 
 import org.reactive_java.model.Task;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.List;
+
+import static org.reactive_java.generator.TaskGenerator.generateTasks;
 
 
 public class Main {
     public static void main(String[] args) {
-//        EasyRandomParameters parameters = new EasyRandomParameters()
-//                .seed(123L)
-//                .objectPoolSize(100)
-//                .randomizationDepth(3)
-//                .charset(StandardCharsets.UTF_8)
-//                .timeRange(nine, five)
-//                .dateRange(today, tomorrow)
-//                .stringLengthRange(5, 50)
-//                .collectionSizeRange(1, 10)
-//                .scanClasspathForConcreteTypes(true)
-//                .overrideDefaultInitialization(false)
-//                .ignoreRandomizationErrors(true);
-
-        System.out.println();
+        Instant startTime = Instant.now();
+        List<Task> tasks = generateTasks(50000);
+        Instant endTime = Instant.now();
+        System.out.println(tasks.size());
+        System.out.println(Duration.between(startTime, endTime).toMillis());
     }
 }
