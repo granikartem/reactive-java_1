@@ -30,7 +30,7 @@ public class TaskStatusStatsCollector implements Collector<Task, Map<Task,Map<Ta
                     taskStats.put(statuses.get(i), Duration.between(statuses.get(i).startTime(), statuses.get(i + 1).startTime()));
                 }
             }
-            taskStats.put(statuses.getLast(), Duration.ofSeconds(ThreadLocalRandom.current().nextLong(MAX_STATUS_DURATION.toSeconds())));
+            taskStats.put(statuses.get(statuses.size() - 1), Duration.ofSeconds(ThreadLocalRandom.current().nextLong(MAX_STATUS_DURATION.toSeconds())));
             map.put(task, taskStats);
         };
     }
@@ -51,5 +51,9 @@ public class TaskStatusStatsCollector implements Collector<Task, Map<Task,Map<Ta
     @Override
     public Set<Characteristics> characteristics() {
         return Set.of(Characteristics.UNORDERED);
+    }
+
+    public static TaskStatusStatsCollector toTaskStatusStatsMap() {
+        return new TaskStatusStatsCollector();
     }
 }
