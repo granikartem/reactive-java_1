@@ -7,6 +7,7 @@ import org.reactive_java.model.TaskStatus;
 import java.text.MessageFormat;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,12 +43,18 @@ public class Main {
                 getCollectorWorkTimeInMillis(Main::getTaskStatusesDurationMapByCollector, tasks)));
     }
 
-    private static long getCollectorWorkTimeInMillis(Function<List<Task>, Map<Task, Map<TaskStatus, Duration>>> collector,
-                                                 List<Task> tasks) {
-        Instant startTime = Instant.now();
-        collector.apply(tasks);
-        Instant endTime = Instant.now();
-        return Duration.between(startTime, endTime).toMillis();
+    private static double getCollectorWorkTimeInMillis(Function<List<Task>, Map<Task, Map<TaskStatus, Duration>>> collector,
+                                                       List<Task> tasks) {
+        List<Duration> durations = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            Instant startTime = Instant.now();
+            collector.apply(tasks);
+            Instant endTime = Instant.now();
+            Duration duration = Duration.between(startTime, endTime);
+            durations.add(duration);
+        }
+
+        return durations.stream().mapToLong(Duration::toMillis).average().getAsDouble();
     }
 
     private static Map<Task, Map<TaskStatus, Duration>> getTaskStatusesDurationMapByIterator(List<Task> tasks) {
