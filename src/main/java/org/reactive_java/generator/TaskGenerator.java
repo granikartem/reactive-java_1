@@ -3,11 +3,15 @@ package org.reactive_java.generator;
 import org.apache.maven.surefire.shared.lang3.RandomStringUtils;
 import org.reactive_java.model.*;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static org.reactive_java.util.Constants.*;
@@ -17,8 +21,7 @@ public class TaskGenerator {
     private final static List<User> users = UserGenerator.generateUsers();
 
 
-    public static List<Task> generateTasks(int amount)
-    {
+    public static List<Task> generateTasks(int amount) {
         List<Task> tasks = new ArrayList<>(amount);
 
         for (int i = 0; i < amount; i++) {
@@ -32,18 +35,19 @@ public class TaskGenerator {
         LocalDateTime startTime = generateCreateTime();
 
         return new Task(
-                        generateId(),
-                        generateTaskNumber(),
-                        startTime,
-                        generateTaskPriority(),
-                        generateStatuses(startTime),
-                        pickUser(),
-                        generateDescription()
-                );
+                generateId(),
+                generateTaskNumber(),
+                startTime,
+                generateTaskPriority(),
+                generateStatuses(startTime),
+                generateEvaluation(),
+                pickUser(),
+                generateDescription()
+        );
     }
 
 
-    private static Long generateId(){
+    private static Long generateId() {
         return ThreadLocalRandom.current().nextLong();
     }
 
@@ -63,15 +67,27 @@ public class TaskGenerator {
     }
 
     private static List<TaskStatus> generateStatuses(LocalDateTime startTime) {
-        int taskStatuses = ThreadLocalRandom.current().nextInt(1, STATUS_AMOUNT);
+        List<TaskStatus> statuses = new ArrayList<>(STATUS_AMOUNT);
 
-        List<TaskStatus> statuses = new ArrayList<>(taskStatuses);
-
-        for (int i = 0; i < taskStatuses; i++) {
-            statuses.add(new TaskStatus(Status.values()[i], startTime));
-            startTime = startTime.plusSeconds(ThreadLocalRandom.current().nextLong(MAX_STATUS_DURATION.toSeconds()));
+        for (int i = 0; i < STATUS_AMOUNT; i++) {
+            LocalDateTime finishTime = startTime.plusSeconds(ThreadLocalRandom.current().nextLong(MAX_STATUS_DURATION.toSeconds()));
+            statuses.add(new TaskStatus(Status.values()[i], startTime, finishTime));
+            startTime = finishTime;
         }
         return statuses;
+    }
+
+    private static Evaluation generateEvaluation() {
+        Duration totalDuration = Duration.ZERO;
+        Map<Status, Duration> statusDurationMap = new HashMap<>();
+
+        for (int i = 0; i < STATUS_AMOUNT; i++) {
+            Duration duration = generateDuration();
+            totalDuration = totalDuration.plus(duration);
+            statusDurationMap.put(Status.values()[i], duration);
+        }
+
+        return new Evaluation(totalDuration, statusDurationMap, pickUser());
     }
 
 
@@ -94,11 +110,15 @@ public class TaskGenerator {
     }
 
     private static LocalTime generateRandomTime() {
-        int startSeconds =  LocalTime.MIN.toSecondOfDay();
+        int startSeconds = LocalTime.MIN.toSecondOfDay();
         int endSeconds = LocalTime.MAX.toSecondOfDay();
         int randomTime = ThreadLocalRandom
                 .current()
                 .nextInt(startSeconds, endSeconds);
         return LocalTime.ofSecondOfDay(randomTime);
+    }
+
+    private static Duration generateDuration() {
+        return  Duration.of(ThreadLocalRandom.current().nextLong(MAX_STATUS_DURATION.toSeconds()), ChronoUnit.SECONDS);
     }
 }

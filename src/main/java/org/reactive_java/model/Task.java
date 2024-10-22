@@ -24,6 +24,8 @@ public class Task {
 
     private final List<TaskStatus> statuses;
 
+    private final Evaluation evaluation;
+
     private User user;
 
     private String description;

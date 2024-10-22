@@ -11,7 +11,7 @@ public enum Status {
 
     TESTING("TESTING", "Тестирование", false),
 
-    CLOSED("CLOSED", "Закрыта", false);
+    CLOSED("CLOSED", "Закрыта", true);
 
     private final String code;
 
