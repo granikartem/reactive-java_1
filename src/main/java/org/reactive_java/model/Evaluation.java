@@ -1,6 +1,5 @@
 package org.reactive_java.model;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -8,7 +7,6 @@ import lombok.RequiredArgsConstructor;
 import java.time.Duration;
 import java.util.Map;
 
-@AllArgsConstructor
 @RequiredArgsConstructor
 @Data
 @Builder

@@ -1,8 +1,9 @@
 package org.reactive_java;
 
-import org.reactive_java.collector.TaskStatusStatsCollector;
+import org.reactive_java.collector.UserTasksCompletetionCollector;
 import org.reactive_java.model.Task;
 import org.reactive_java.model.TaskStatus;
+import org.reactive_java.model.User;
 
 import java.text.MessageFormat;
 import java.time.Duration;
@@ -36,14 +37,14 @@ public class Main {
 
     private static void printWorkTime(List<Task> tasks) {
         System.out.println(MessageFormat.format("Время работы итерационным циклом по коллекции = {0}\n",
-                getCollectorWorkTimeInMillis(Main::getTaskStatusesDurationMapByIterator, tasks)));
+                getCollectorWorkTimeInMillis(Main::getUserTasksCompletionMapByIterator, tasks)));
         System.out.println(MessageFormat.format("Время работы конвейером с помощью Stream API = {0}\n",
-                getCollectorWorkTimeInMillis(Main::getTaskStatusesDurationMapByStream, tasks)));
+                getCollectorWorkTimeInMillis(Main::getUserTasksCompletionMapByStream, tasks)));
         System.out.println(MessageFormat.format("Время работы конвейером с помощью собственного коллектора = {0}\n",
-                getCollectorWorkTimeInMillis(Main::getTaskStatusesDurationMapByCollector, tasks)));
+                getCollectorWorkTimeInMillis(Main::getUserTasksCompletionMapByCollector, tasks)));
     }
 
-    private static double getCollectorWorkTimeInMillis(Function<List<Task>, Map<Task, Map<TaskStatus, Duration>>> collector,
+    private static double getCollectorWorkTimeInMillis(Function<List<Task>, Map<User, Map<Task, Boolean>>> collector,
                                                        List<Task> tasks) {
         List<Duration> durations = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
@@ -57,32 +58,54 @@ public class Main {
         return durations.stream().mapToLong(Duration::toMillis).average().getAsDouble();
     }
 
-    private static Map<Task, Map<TaskStatus, Duration>> getTaskStatusesDurationMapByIterator(List<Task> tasks) {
-        var taskStatusDurationMap = new HashMap<Task, Map<TaskStatus, Duration>>();
+    private static Map<User, Map<Task, Boolean>> getUserTasksCompletionMapByIterator(List<Task> tasks) {
+        var userTasksCompletionMap = new HashMap<User, Map<Task, Boolean>>();
         for (Task task : tasks) {
-            var statusDurationMap = new HashMap<TaskStatus, Duration>();
-            for (int i = 0; i < task.getStatuses().size() - 1; i++) {
-                statusDurationMap.put(task.getStatuses().get(i), Duration.between(task.getStatuses().get(i).startTime(),
-                        task.getStatuses().get(i + 1).startTime()));
+            User user = task.getUser();
+
+            if (!userTasksCompletionMap.containsKey(user)) {
+                userTasksCompletionMap.put(user, new HashMap<>());
             }
-            taskStatusDurationMap.put(task, statusDurationMap);
+
+            var taskStatuses = task.getStatuses();
+            boolean taskCompletedOnTime = true;
+
+            for (TaskStatus taskStatus : taskStatuses) {
+                taskCompletedOnTime &= Duration.between(taskStatus.startTime(), taskStatus.finishTime())
+                        .compareTo(task.getEvaluation().getStatusDurationMap().get(taskStatus.status())) > 0;
+            }
+
+            userTasksCompletionMap.get(user).put(task, taskCompletedOnTime);
         }
-        return taskStatusDurationMap;
+        return userTasksCompletionMap;
     }
 
-    private static Map<Task, Map<TaskStatus, Duration>> getTaskStatusesDurationMapByStream(List<Task> tasks) {
-        return tasks.stream().collect(Collectors.toMap(task -> task,
-                task -> {
-                    var statusDurationMap = new HashMap<TaskStatus, Duration>();
-                    for (int i = 0; i < task.getStatuses().size() - 1; i++) {
-                        statusDurationMap.put(task.getStatuses().get(i), Duration.between(task.getStatuses().get(i).startTime(),
-                                task.getStatuses().get(i + 1).startTime()));
-                    }
-                    return statusDurationMap;
-                }));
+    private static Map<User, Map<Task, Boolean>> getUserTasksCompletionMapByStream(List<Task> tasks){
+        return tasks.stream().collect(
+                Collectors.toMap(
+                        task -> task.getUser(),
+                        task -> {
+                            boolean taskCompletedOnTime = task.getStatuses()
+                                    .stream()
+                                    .noneMatch(
+                                            taskStatus -> Duration.between(taskStatus.startTime(), taskStatus.finishTime())
+                                                    .compareTo(task.getEvaluation().getStatusDurationMap().get(taskStatus.status())) > 0
+                                    );
+
+                            var result = new HashMap<Task, Boolean>();
+                            result.put(task, taskCompletedOnTime);
+
+                            return new HashMap<>(result);
+                        },
+                        (map1, map2) -> {
+                            map1.putAll(map2);
+                            return map1;
+                        }
+                )
+        );
     }
 
-    private static Map<Task, Map<TaskStatus, Duration>> getTaskStatusesDurationMapByCollector(List<Task> tasks) {
-        return tasks.stream().collect(TaskStatusStatsCollector.toTaskStatusStatsMap());
+    private static Map<User, Map<Task, Boolean>> getUserTasksCompletionMapByCollector(List<Task> tasks) {
+        return tasks.stream().collect(UserTasksCompletetionCollector.toTaskStatusStatsMap());
     }
 }

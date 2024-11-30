@@ -14,9 +14,9 @@ import java.util.stream.Collector;
 
 import static java.util.stream.Collector.Characteristics.IDENTITY_FINISH;
 
-public class TaskStatusStatsCollector implements Collector<Task, Map<User, Map<Task, Boolean>>, Map<User, Map<Task, Boolean>>> {
-    public static TaskStatusStatsCollector toTaskStatusStatsMap() {
-        return new TaskStatusStatsCollector();
+public class UserTasksCompletetionCollector implements Collector<Task, Map<User, Map<Task, Boolean>>, Map<User, Map<Task, Boolean>>> {
+    public static UserTasksCompletetionCollector toTaskStatusStatsMap() {
+        return new UserTasksCompletetionCollector();
     }
 
     @Override
@@ -29,6 +29,7 @@ public class TaskStatusStatsCollector implements Collector<Task, Map<User, Map<T
         return (map, task) -> {
             User user = task.getUser();
             Evaluation evaluation = task.getEvaluation();
+
             boolean taskCompletedOnTime = task.getStatuses()
                     .stream()
                     .noneMatch(
@@ -36,18 +37,12 @@ public class TaskStatusStatsCollector implements Collector<Task, Map<User, Map<T
                             .compareTo(evaluation.getStatusDurationMap().get(taskStatus.status())) > 0
             );
 
-//            Iterator<TaskStatus> taskStatusIterator = task.getStatuses().iterator();
-//
-//            while (taskStatusIterator.hasNext()) {
-//                TaskStatus taskStatus = taskStatusIterator.next();
-//                taskCompletedOnTime &= Duration.between(taskStatus.startTime(), taskStatus.finishTime()).compareTo(evaluation.getStatusDurationMap().get(taskStatus.status())) <= 0;
-//            }
-
-
             if (map.containsKey(user)) {
                 map.get(user).put(task, taskCompletedOnTime);
             } else {
-                map.put(user, Map.of(task, taskCompletedOnTime));
+                var resultMap = new HashMap<Task, Boolean>();
+                resultMap.put(task, taskCompletedOnTime);
+                map.put(user, resultMap);
             }
         };
     }
@@ -62,16 +57,6 @@ public class TaskStatusStatsCollector implements Collector<Task, Map<User, Map<T
                     map1.put(user, value);
                 }
             });
-//            Iterator<Map.Entry<User, Map<Task, Boolean>>> map2Iterator = map2.entrySet().iterator();
-//            while (map2Iterator.hasNext()) {
-//                Map.Entry<User, Map<Task, Boolean>> entry = map2Iterator.next();
-//                User user = entry.getKey();
-//                if (map1.containsKey(user)) {
-//                    map1.get(user).putAll(entry.getValue());
-//                } else {
-//                    map1.put(user, entry.getValue());
-//                }
-//            }
             return map1;
         };
     }
